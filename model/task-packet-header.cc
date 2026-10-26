@@ -237,7 +237,7 @@ TaskPacketHeader::GetRequiredCycles() const
 void
 TaskPacketHeader::SetQueueDuration(Time duration)
 {
-    NS_ABORT_MSG_IF(duration.IsNegative(), "Queue duration cannot be negative");
+    NS_ABORT_MSG_IF(duration < Seconds(0), "Queue duration cannot be negative");
     m_queueDurationNs = duration.GetNanoSeconds();
 }
 
@@ -250,7 +250,7 @@ TaskPacketHeader::GetQueueDuration() const
 void
 TaskPacketHeader::SetComputeDuration(Time duration)
 {
-    NS_ABORT_MSG_IF(duration.IsNegative(), "Compute duration cannot be negative");
+    NS_ABORT_MSG_IF(duration < Seconds(0), "Compute duration cannot be negative");
     m_computeDurationNs = duration.GetNanoSeconds();
 }
 

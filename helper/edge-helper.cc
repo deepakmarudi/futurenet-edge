@@ -10,14 +10,15 @@
 
 #include "edge-helper.h"
 
-#include "compute-node-model.h"
-#include "edge-compute-application.h"
-#include "offload-policy.h"
-#include "task-client-application.h"
+#include "../model/compute-node-model.h"
+#include "../model/edge-compute-application.h"
+#include "../model/offload-policy.h"
+#include "../model/task-client-application.h"
 
 #include "ns3/log.h"
 #include "ns3/node.h"
 #include "ns3/simulator.h"
+#include "ns3/trace-helper.h"
 
 namespace ns3
 {

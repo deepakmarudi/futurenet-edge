@@ -13,11 +13,11 @@
 #include "ns3/point-to-point-module.h"
 #include "ns3/flow-monitor-module.h"
 
-#include "edge-helper.h"
-#include "offload-policy.h"
-#include "task-client-application.h"
-#include "edge-compute-application.h"
-#include "compute-node-model.h"
+#include "ns3/edge-helper.h"
+#include "ns3/offload-policy.h"
+#include "ns3/task-client-application.h"
+#include "ns3/edge-compute-application.h"
+#include "ns3/compute-node-model.h"
 
 using namespace ns3;
 
@@ -70,11 +70,11 @@ main(int argc, char* argv[])
     EdgeHelper edgeHelper;
 
     // Node 0 (Phone): Weak CPU (1e9 cycles/s)
-    edgeHelper.SetComputeAttribute("DeviceComputeCapacity", DoubleValue(1e9));
+    edgeHelper.SetComputeAttribute("ComputeCapacity", DoubleValue(1e9));
     edgeHelper.InstallComputeNode(nodes.Get(0));
 
     // Node 1 (Edge Server): Fast CPU (1e10 cycles/s = 10x faster)
-    edgeHelper.SetComputeAttribute("DeviceComputeCapacity", DoubleValue(1e10));
+    edgeHelper.SetComputeAttribute("ComputeCapacity", DoubleValue(1e10));
     edgeHelper.InstallComputeNode(nodes.Get(1));
 
     // 6. Install Edge Server Application on Node 1 (Listening on port 9090)
