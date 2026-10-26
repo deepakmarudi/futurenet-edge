@@ -20,6 +20,7 @@
 #include "ns3/event-id.h"
 #include "ns3/node.h"
 #include "ns3/nstime.h"
+#include "ns3/packet.h"
 #include "ns3/random-variable-stream.h"
 #include "ns3/socket.h"
 #include "ns3/traced-callback.h"
@@ -108,22 +109,50 @@ class TaskClientApplication : public Application
     void DoDispose() override;
 
   private:
+    struct ComputeTarget
+    {
+        Ptr<Node> node;
+        ComputeNodeState state;
+    };
+
+    struct ClientTransfer
+    {
+        Ptr<Socket> socket;
+        bool isUdp{false};
+        bool connected{false};
+        bool zeroInputFrameSent{false};
+        bool hasPendingFrame{false};
+        uint32_t pendingChunkBytes{0};
+        uint64_t inputBytesSent{0};
+        uint64_t outputBytesReceived{0};
+        Ptr<Packet> pendingFrame;
+        Ptr<Packet> rxBuffer;
+    };
+
     void ScheduleNextTask();
+    void GenerateAndScheduleNextTask();
     void RefreshCandidateStates();
     void ExecuteLocally(const TaskDescriptor& task);
     void OffloadRemotely(const TaskDescriptor& task, const ComputeNodeState& target);
     void OnLocalExecutionComplete(const TaskDescriptor& task, Time waitTime, Time computeTime);
+    void HandleConnectSuccess(Ptr<Socket> socket);
+    void HandleConnectFailure(Ptr<Socket> socket);
+    void HandleSendReady(Ptr<Socket> socket, uint32_t txSpace);
     void HandleRead(Ptr<Socket> socket);
+    void TrySendNextChunk(uint64_t taskId);
+    bool ProcessReplyFrame(uint64_t taskId, const TaskPacketHeader& header, uint32_t payloadBytes);
+    uint64_t GetTaskIdForSocket(Ptr<Socket> socket) const;
+    void FailTransfer(uint64_t taskId);
+    void CloseTransfer(uint64_t taskId);
     void FinalizeTask(uint64_t taskId, Time queueDuration, Time computeDuration);
 
     Ptr<OffloadPolicy> m_policy;                    //!< Active selection policy
     Ptr<ComputeNodeModel> m_localCompute;           //!< Local compute engine (if present)
     std::vector<ComputeNodeState> m_candidateStates;//!< Candidate targets snapshot
+    std::vector<ComputeTarget> m_computeTargets;    //!< Registered remote nodes and static link estimates
     std::map<uint64_t, TaskClientRecord> m_records; //!< Milestone tracking map
-
-    // Sockets
-    Ptr<Socket> m_txSocket; //!< Outbound TCP or UDP socket
-    Ptr<Socket> m_rxSocket; //!< Inbound socket for UDP replies
+    std::map<uint64_t, ClientTransfer> m_transfers; //!< Per-task transport and framing state
+    std::map<const Socket*, uint64_t> m_socketTaskIds; //!< Reverse lookup for socket callbacks
 
     // Configurable Attributes (M06 SRS Section 5)
     uint64_t m_inputBytes{1000000};                //!< TaskInputBytes (default: 1 MB)
@@ -137,6 +166,7 @@ class TaskClientApplication : public Application
     Time m_policyInterval{Seconds(0)};             //!< PolicyEvaluationInterval (0 = per task)
 
     uint64_t m_nextTaskId{1};                      //!< Incremental task ID counter
+    bool m_applicationActive{false};                //!< Guards periodic policy refresh scheduling
     EventId m_nextTaskEvent;                       //!< Periodic generation event
     EventId m_policyRefreshEvent;                  //!< Periodic policy cache refresh event
     Ptr<RandomVariableStream> m_arrivalRng;        //!< Random stream for inter-arrival jitter
