@@ -18,9 +18,11 @@
 
 #include "ns3/address.h"
 #include "ns3/application.h"
+#include "ns3/event-id.h"
 #include "ns3/socket.h"
 
 #include <map>
+#include <set>
 #include <string>
 
 namespace ns3
@@ -37,6 +39,29 @@ struct RxTaskContext
     uint64_t totalExpectedBytes{0}; //!< Required upload size (header.GetInputBytes())
     Time timeFirstChunkRx{Seconds(0)};//!< Arrival timestamp of first segment
     Address clientAddress;          //!< Return network address of requesting client
+    Ptr<Socket> clientSocket;        //!< Accepted TCP connection; null for UDP
+};
+
+/**
+ * \ingroup futurenet-edge
+ * \brief Result data waiting to be sent in bounded wire-protocol chunks.
+ */
+struct TxTaskContext
+{
+    TaskDescriptor task;
+    Address clientAddress;
+    Ptr<Socket> socket;
+    bool isUdp{false};
+    bool ackOnly{false};
+    bool hasPendingFrame{false};
+    bool ackFrameSent{false};
+    bool emptyResultFrameSent{false};
+    uint32_t pendingChunkBytes{0};
+    uint64_t bytesSent{0};
+    Time queueDuration{Seconds(0)};
+    Time computeDuration{Seconds(0)};
+    Ptr<Packet> pendingFrame;
+    EventId nextSendEvent;
 };
 
 /**
@@ -74,20 +99,38 @@ class EdgeComputeApplication : public Application
 
   private:
     void HandleAccept(Ptr<Socket> socket, const Address& from);
+    bool AcceptConnection(Ptr<Socket> socket, const Address& from);
     void HandleRead(Ptr<Socket> socket);
     void ProcessIncomingChunk(const TaskPacketHeader& header,
                               Ptr<Packet> packet,
-                              const Address& from);
+                              const Address& from,
+                              Ptr<Socket> clientSocket);
     void OnTaskComputeFinished(const TaskDescriptor& task, Time waitTime, Time computeTime);
     void SendResult(const Address& clientAddr,
                     const TaskDescriptor& task,
                     Time waitTime,
-                    Time computeTime);
+                    Time computeTime,
+                    Ptr<Socket> clientSocket);
+    void HandleSendReady(Ptr<Socket> socket, uint32_t txSpace);
+    void HandlePeerClose(Ptr<Socket> socket);
+    void HandlePeerError(Ptr<Socket> socket);
+    void PumpResult(uint64_t taskId);
+    void FinishResult(uint64_t taskId);
+    void CleanupTcpSocket(Ptr<Socket> socket, bool closeSocket);
+    void RejectIncomingTask(uint64_t taskId, Ptr<Socket> clientSocket, const std::string& reason);
 
     Ptr<ComputeNodeModel> m_computeModel;                 //!< Processing hardware model
     Ptr<Socket> m_listeningSocket;                        //!< Inbound listening socket
     std::map<uint64_t, RxTaskContext> m_assemblyMap;      //!< In-flight reassembly buffers
     std::map<uint64_t, Address> m_taskReturnAddressMap;  //!< Return endpoint per taskId
+    std::map<uint64_t, Ptr<Socket>> m_taskTcpSocketMap;   //!< Accepted connection per TCP task
+    std::map<uint64_t, TxTaskContext> m_resultTransmissions; //!< Per-task result send state
+    std::map<const Socket*, Ptr<Packet>> m_tcpRxBuffers; //!< Framing buffer for each TCP connection
+    std::map<const Socket*, Address> m_tcpPeerAddresses; //!< Peer address for accepted sockets
+    std::map<const Socket*, uint64_t> m_tcpTaskIds;       //!< Task currently associated with a connection
+    std::map<const Socket*, uint64_t> m_txTaskIds;        //!< Reverse lookup for send callbacks
+    std::set<uint64_t> m_seenTaskIds;                    //!< Prevents duplicate task submission
+    std::set<uint64_t> m_activeTaskIds;                  //!< Tasks admitted to the compute model
 
     // Attributes (M06 SRS Section 5)
     uint16_t m_port{9090};                                //!< Inbound listening port
