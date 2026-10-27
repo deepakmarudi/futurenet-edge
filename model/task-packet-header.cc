@@ -1,6 +1,6 @@
 /**
- * \file task-packet-header.cc
- * \brief Serialization and accessors for the futurenet-edge wire header.
+ * @file task-packet-header.cc
+ * @brief Serialization and accessors for the futurenet-edge wire header.
  */
 
 #include "task-packet-header.h"

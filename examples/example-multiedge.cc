@@ -1,6 +1,6 @@
 /**
- * \file example-multiedge.cc
- * \brief Scale demonstration with 25 clients and 3 edge servers.
+ * @file example-multiedge.cc
+ * @brief Scale demonstration with 25 clients and 3 edge servers.
  *
  * Generates a configurable number of tasks on multiple clients and compares
  * the nearest-edge and estimated-completion-time policies over a routed
@@ -136,6 +136,7 @@ main(int argc, char *argv[])
     std::string policyName = "lowest";
     std::string protocol = "TCP";
     std::string ackMode = "ResultData";
+    std::string csvPath = "multiedge-results.csv";
     uint16_t serverPort = 9090;
     uint32_t seed = 1;
     uint64_t run = 1;
@@ -151,6 +152,7 @@ main(int argc, char *argv[])
     cmd.AddValue("policy", "Offload policy: nearest or lowest", policyName);
     cmd.AddValue("protocol", "Task transport protocol: TCP or UDP", protocol);
     cmd.AddValue("ackMode", "Result mode: ResultData or AckOnly", ackMode);
+    cmd.AddValue("csvPath", "Path to output CSV file (default: multiedge-results.csv)", csvPath);
     cmd.AddValue("port", "Edge server listening port", serverPort);
     cmd.AddValue("seed", "RNG seed", seed);
     cmd.AddValue("run", "RNG run number", run);
@@ -271,6 +273,9 @@ main(int argc, char *argv[])
     }
     clientApps.Start(Seconds(0.5));
     clientApps.Stop(Seconds(simTime));
+
+    // Enable 12-column CSV tracing for all client tasks
+    edgeHelper.EnableCsvTracing(csvPath);
 
     // Disable periodic generation and schedule a fixed task count for a repeatable
     // 25-client / 100-task baseline while still using TaskClientApplication.

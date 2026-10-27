@@ -1,7 +1,7 @@
 /**
- * \file task-descriptor.h
- * \brief TaskDescriptor and TaskStatus definition for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file task-descriptor.h
+ * @brief TaskDescriptor and TaskStatus definition for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  *
  * Implements M06-FR-01: Encapsulates task ID, source node ID, input bytes,
  * output bytes or output ratio, required compute cycles, creation time,
@@ -21,8 +21,8 @@ namespace ns3
 {
 
 /**
- * \ingroup futurenet-edge
- * \brief Lifecycle states of an edge computational task.
+ * @ingroup futurenet-edge
+ * @brief Lifecycle states of an edge computational task.
  */
 enum class TaskStatus
 {
@@ -38,8 +38,8 @@ enum class TaskStatus
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Abstract computational task descriptor (M06-FR-01).
+ * @ingroup futurenet-edge
+ * @brief Abstract computational task descriptor (M06-FR-01).
  *
  * Encapsulates the workload characteristics of a discrete compute job without
  * embedding a real OS or language runtime. Supports deterministic output payload
@@ -49,18 +49,18 @@ class TaskDescriptor
 {
   public:
     /**
-     * \brief Default constructor initializing all fields to safe zero defaults.
+     * @brief Default constructor initializing all fields to safe zero defaults.
      */
     TaskDescriptor();
 
     /**
-     * \brief Parameterized constructor.
-     * \param taskId Unique task identifier.
-     * \param sourceNodeId Node ID generating this task.
-     * \param inputBytes Payload size in bytes to be transferred to compute node.
-     * \param outputBytes Result size in bytes to be returned to client.
-     * \param requiredCycles Computational demand in abstract CPU cycles.
-     * \param creationTime Simulation time when task was instantiated.
+     * @brief Parameterized constructor.
+     * @param taskId Unique task identifier.
+     * @param sourceNodeId Node ID generating this task.
+     * @param inputBytes Payload size in bytes to be transferred to compute node.
+     * @param outputBytes Result size in bytes to be returned to client.
+     * @param requiredCycles Computational demand in abstract CPU cycles.
+     * @param creationTime Simulation time when task was instantiated.
      */
     TaskDescriptor(uint64_t taskId,
                    uint32_t sourceNodeId,
@@ -75,10 +75,10 @@ class TaskDescriptor
     uint64_t GetInputBytes() const;
 
     /**
-     * \brief Derives the output result payload size in bytes (M06-FR-01).
+     * @brief Derives the output result payload size in bytes (M06-FR-01).
      * If an output ratio was configured (m_outputRatio >= 0.0), evaluates
      * static_cast<uint64_t>(m_inputBytes * m_outputRatio). Otherwise returns m_outputBytes.
-     * \return Size in bytes of output result payload.
+     * @return Size in bytes of output result payload.
      */
     uint64_t GetOutputBytes() const;
 
@@ -102,10 +102,10 @@ class TaskDescriptor
     void ClearDeadline();
 
     /**
-     * \brief Converts this task's metadata into a FutureNetTrafficClass struct (CG Section 4.4).
-     * \param priority Traffic priority level (0-7, default: 0).
-     * \param importance Normalized importance metric [0, 1].
-     * \return Standard FutureNetTrafficClass metadata.
+     * @brief Converts this task's metadata into a FutureNetTrafficClass struct (CG Section 4.4).
+     * @param priority Traffic priority level (0-7, default: 0).
+     * @param importance Normalized importance metric [0, 1].
+     * @return Standard FutureNetTrafficClass metadata.
      */
     FutureNetTrafficClass ToTrafficClass(uint8_t priority = 0, double importance = 1.0) const;
 

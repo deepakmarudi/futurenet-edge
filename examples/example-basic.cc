@@ -1,7 +1,7 @@
 /**
- * \file example-basic.cc
- * \brief Basic demonstration of M06 futurenet-edge task offloading.
- * \author FutureNet Module Team
+ * @file example-basic.cc
+ * @brief Basic demonstration of M06 futurenet-edge task offloading.
+ * @author FutureNet Module Team
  *
  * Demonstrates 1 Client Node + 1 Edge Server Node comparing LocalOnlyPolicy
  * vs. NearestEdgePolicy, integrated with FlowMonitor and CSV export.

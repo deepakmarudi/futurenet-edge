@@ -1,6 +1,6 @@
 /**
- * \file task-client-application.cc
- * \brief Implementation of TaskClientApplication for M06 futurenet-edge.
+ * @file task-client-application.cc
+ * @brief Implementation of TaskClientApplication for M06 futurenet-edge.
  */
 
 #include "task-client-application.h"
@@ -46,36 +46,36 @@ TaskClientApplication::GetTypeId()
             .SetParent<Application>()
             .SetGroupName("FuturenetEdge")
             .AddConstructor<TaskClientApplication>()
-            .AddAttribute("TaskInputBytes",
+                        .AddAttribute("TaskInputBytes",
                           "Input payload size generated for each task, in bytes.",
                           UintegerValue(1000000),
                           MakeUintegerAccessor(&TaskClientApplication::m_inputBytes),
-                          MakeUintegerChecker<uint64_t>())
+                          MakeUintegerChecker<uint64_t>(1000, 1000000000))
             .AddAttribute("TaskOutputBytes",
                           "Fixed output payload size generated for each task, in bytes.",
                           UintegerValue(100000),
                           MakeUintegerAccessor(&TaskClientApplication::m_outputBytes),
-                          MakeUintegerChecker<uint64_t>())
+                          MakeUintegerChecker<uint64_t>(0, 1000000000))
             .AddAttribute("TaskOutputRatio",
                           "When non-negative, derives output bytes as input bytes times this ratio.",
                           DoubleValue(-1.0),
                           MakeDoubleAccessor(&TaskClientApplication::m_outputRatio),
-                          MakeDoubleChecker<double>(-1.0))
+                          MakeDoubleChecker<double>(-1.0, 10.0))
             .AddAttribute("RequiredCycles",
                           "Abstract CPU cycles required by each generated task.",
                           DoubleValue(1e9),
                           MakeDoubleAccessor(&TaskClientApplication::m_requiredCycles),
-                          MakeDoubleChecker<double>(0.0))
+                          MakeDoubleChecker<double>(1e6, 1e13))
             .AddAttribute("TaskArrivalInterval",
                           "Mean interval between generated tasks.",
                           TimeValue(Seconds(1.0)),
                           MakeTimeAccessor(&TaskClientApplication::m_taskArrivalInterval),
-                          MakeTimeChecker(MilliSeconds(0)))
+                          MakeTimeChecker(Seconds(0), Seconds(1000)))
             .AddAttribute("TaskDeadline",
                           "Optional deadline duration measured from task creation; zero disables it.",
                           TimeValue(Seconds(0)),
                           MakeTimeAccessor(&TaskClientApplication::m_taskDeadline),
-                          MakeTimeChecker(MilliSeconds(0)))
+                          MakeTimeChecker(Seconds(0), Seconds(10000)))
             .AddAttribute("ResultAckMode",
                           "ResultData returns output bytes; AckOnly returns a completion header.",
                           StringValue("ResultData"),
@@ -90,7 +90,7 @@ TaskClientApplication::GetTypeId()
                           "Refreshes remote queue and capacity snapshots at this interval; zero refreshes per task.",
                           TimeValue(Seconds(0)),
                           MakeTimeAccessor(&TaskClientApplication::m_policyInterval),
-                          MakeTimeChecker(MilliSeconds(0)))
+                          MakeTimeChecker(Seconds(0), Seconds(10)))
             .AddTraceSource("TaskCreated",
                             "Fired when a task is created.",
                             MakeTraceSourceAccessor(&TaskClientApplication::m_traceTaskCreated),
@@ -106,7 +106,11 @@ TaskClientApplication::GetTypeId()
             .AddTraceSource("TaskDeadlineMiss",
                             "Fired when a completed task misses its configured deadline.",
                             MakeTraceSourceAccessor(&TaskClientApplication::m_traceTaskDeadlineMiss),
-                            "ns3::TracedCallback::Uint64Time");
+                            "ns3::TracedCallback::Uint64Time")
+            .AddTraceSource("TaskRecordCompleted",
+                            "Fired when a task completes, providing full milestone timing records.",
+                            MakeTraceSourceAccessor(&TaskClientApplication::m_traceTaskRecordCompleted),
+                            "ns3::TaskClientApplication::TaskRecordTracedCallback");
     return tid;
 }
 
@@ -170,6 +174,18 @@ TaskClientApplication::SetOffloadPolicy(Ptr<OffloadPolicy> policy)
     {
         m_policy = CreateObject<LocalOnlyPolicy>();
     }
+}
+
+bool
+TaskClientApplication::GetTaskRecord(uint64_t taskId, TaskClientRecord& record) const
+{
+    auto it = m_records.find(taskId);
+    if (it != m_records.end())
+    {
+        record = it->second;
+        return true;
+    }
+    return false;
 }
 
 TaskStatus
@@ -896,6 +912,7 @@ TaskClientApplication::FinalizeTask(uint64_t taskId,
 
     record.status = TaskStatus::COMPLETED;
     m_traceTaskCompleted(taskId, record.timeDone - record.timeCreated);
+    m_traceTaskRecordCompleted(record);
     if (record.task.HasDeadline() && record.timeDone > record.task.GetDeadline())
     {
         m_traceTaskDeadlineMiss(taskId, record.timeDone - record.task.GetDeadline());

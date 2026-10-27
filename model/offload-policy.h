@@ -1,7 +1,7 @@
 /**
- * \file offload-policy.h
- * \brief OffloadPolicy interface and concrete selection policies for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file offload-policy.h
+ * @brief OffloadPolicy interface and concrete selection policies for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  *
  * Implements M06-FR-08 and M06-FR-10: Mechanism/policy separation (CG Section 1.3),
  * LocalOnlyPolicy baseline, NearestEdgePolicy, and LowestEstimatedCompletionTimePolicy.
@@ -22,8 +22,8 @@ namespace ns3
 {
 
 /**
- * \ingroup futurenet-edge
- * \brief Telemetry snapshot of a candidate compute node for policy evaluation.
+ * @ingroup futurenet-edge
+ * @brief Telemetry snapshot of a candidate compute node for policy evaluation.
  */
 struct ComputeNodeState
 {
@@ -40,8 +40,8 @@ struct ComputeNodeState
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Decision output returned by an OffloadPolicy.
+ * @ingroup futurenet-edge
+ * @brief Decision output returned by an OffloadPolicy.
  */
 struct OffloadDecision
 {
@@ -57,15 +57,15 @@ struct OffloadDecision
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Abstract base interface for task offloading policies (CG Section 4.6).
+ * @ingroup futurenet-edge
+ * @brief Abstract base interface for task offloading policies (CG Section 4.6).
  */
 class OffloadPolicy : public Object
 {
   public:
     /**
-     * \brief Register this type with the ns-3 TypeId system.
-     * \return TypeId instance.
+     * @brief Register this type with the ns-3 TypeId system.
+     * @return TypeId instance.
      */
     static TypeId GetTypeId();
 
@@ -73,18 +73,18 @@ class OffloadPolicy : public Object
     ~OffloadPolicy() override = default;
 
     /**
-     * \brief Selects an execution target for the given task across candidate nodes.
-     * \param task Workload descriptor.
-     * \param candidates Candidate compute nodes (including local node).
-     * \return OffloadDecision specifying local vs remote and target node ID.
+     * @brief Selects an execution target for the given task across candidate nodes.
+     * @param task Workload descriptor.
+     * @param candidates Candidate compute nodes (including local node).
+     * @return OffloadDecision specifying local vs remote and target node ID.
      */
     virtual OffloadDecision Select(const TaskDescriptor& task,
                                    const std::vector<ComputeNodeState>& candidates) const = 0;
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Deterministic baseline policy that always executes locally (M06-FR-08).
+ * @ingroup futurenet-edge
+ * @brief Deterministic baseline policy that always executes locally (M06-FR-08).
  */
 class LocalOnlyPolicy : public OffloadPolicy
 {
@@ -99,8 +99,8 @@ class LocalOnlyPolicy : public OffloadPolicy
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Proximity-aware policy that offloads to the nearest available edge node (M06-FR-08).
+ * @ingroup futurenet-edge
+ * @brief Proximity-aware policy that offloads to the nearest available edge node (M06-FR-08).
  * Selects candidate with min(distanceMeters) or min(propagationDelay) subject to queue space.
  */
 class NearestEdgePolicy : public OffloadPolicy
@@ -116,8 +116,8 @@ class NearestEdgePolicy : public OffloadPolicy
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Latency-optimal policy minimizing estimated end-to-end completion time (M06-FR-10).
+ * @ingroup futurenet-edge
+ * @brief Latency-optimal policy minimizing estimated end-to-end completion time (M06-FR-10).
  * Evaluates: argmin(T_tx_in + T_queue + T_compute + T_tx_out) across all candidates.
  */
 class LowestEstimatedCompletionTimePolicy : public OffloadPolicy

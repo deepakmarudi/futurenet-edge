@@ -1,7 +1,7 @@
 /**
- * \file compute-queue.h
- * \brief ComputeQueue and ComputeQueueEntry definitions for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file compute-queue.h
+ * @brief ComputeQueue and ComputeQueueEntry definitions for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  *
  * Implements M06-FR-03: Execution queue maintenance with configurable admission limit
  * (MaxQueuedTasks) and O(1) running cycle tracking (CG Section 11).
@@ -23,8 +23,8 @@ namespace ns3
 {
 
 /**
- * \ingroup futurenet-edge
- * \brief Single entry held inside the ComputeQueue.
+ * @ingroup futurenet-edge
+ * @brief Single entry held inside the ComputeQueue.
  */
 struct ComputeQueueEntry
 {
@@ -36,8 +36,8 @@ struct ComputeQueueEntry
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Execution queue for compute nodes (M06-FR-03).
+ * @ingroup futurenet-edge
+ * @brief Execution queue for compute nodes (M06-FR-03).
  *
  * Manages waiting tasks using an underlying std::deque to ensure strictly O(1)
  * enqueue and dequeue operations. Tracks cumulative queued cycles in O(1) time
@@ -47,8 +47,8 @@ class ComputeQueue : public Object
 {
   public:
     /**
-     * \brief Register this type with the ns-3 TypeId system.
-     * \return TypeId instance.
+     * @brief Register this type with the ns-3 TypeId system.
+     * @return TypeId instance.
      */
     static TypeId GetTypeId();
 
@@ -56,66 +56,66 @@ class ComputeQueue : public Object
     ~ComputeQueue() override = default;
 
     /**
-     * \brief Enqueue a task entry at the tail of the queue.
-     * \param entry The entry to be queued.
-     * \return true if admitted; false if queue is full (m_queue.size() >= m_maxQueuedTasks).
+     * @brief Enqueue a task entry at the tail of the queue.
+     * @param entry The entry to be queued.
+     * @return true if admitted; false if queue is full (m_queue.size() >= m_maxQueuedTasks).
      */
     bool Enqueue(const ComputeQueueEntry& entry);
 
     /**
-     * \brief Dequeue the head entry from the queue.
-     * \param outEntry Reference populated with the popped entry.
-     * \return true if an entry was popped; false if queue was empty.
+     * @brief Dequeue the head entry from the queue.
+     * @param outEntry Reference populated with the popped entry.
+     * @return true if an entry was popped; false if queue was empty.
      */
     bool Dequeue(ComputeQueueEntry& outEntry);
 
     /**
-     * \brief Inspect the head entry without removing it.
-     * \param outEntry Reference populated with head entry.
-     * \return true if head exists; false if empty.
+     * @brief Inspect the head entry without removing it.
+     * @param outEntry Reference populated with head entry.
+     * @return true if head exists; false if empty.
      */
     bool Peek(ComputeQueueEntry& outEntry) const;
 
     /**
-     * \brief Current number of waiting tasks in the queue.
-     * \return Queue length.
+     * @brief Current number of waiting tasks in the queue.
+     * @return Queue length.
      */
     uint32_t GetQueueLength() const;
 
     /**
-     * \brief Maximum permitted queue length before task admission drops.
-     * \return Configured MaxQueuedTasks capacity.
+     * @brief Maximum permitted queue length before task admission drops.
+     * @return Configured MaxQueuedTasks capacity.
      */
     uint32_t GetMaxQueueLength() const;
 
     /**
-     * \brief Sets the maximum queued task limit.
-     * \param maxQueue New maximum limit.
+     * @brief Sets the maximum queued task limit.
+     * @param maxQueue New maximum limit.
      */
     void SetMaxQueueLength(uint32_t maxQueue);
 
     /**
-     * \brief Running total of computational cycles across all currently waiting tasks.
-     * \return Cumulative cycles in queue.
+     * @brief Running total of computational cycles across all currently waiting tasks.
+     * @return Cumulative cycles in queue.
      */
     double GetTotalQueuedCycles() const;
 
     /**
-     * \brief Checks if the queue has reached capacity.
-     * \return true if queue length >= maxQueueLength.
+     * @brief Checks if the queue has reached capacity.
+     * @return true if queue length >= maxQueueLength.
      */
     bool IsFull() const;
 
     /**
-     * \brief Checks if the queue is empty.
-     * \return true if queue length == 0.
+     * @brief Checks if the queue is empty.
+     * @return true if queue length == 0.
      */
     bool IsEmpty() const;
 
     /**
-     * \brief Removes a task from the queue by task ID (M06 CancelTask support).
-     * \param taskId Unique task ID to remove.
-     * \return true if found and removed; false otherwise.
+     * @brief Removes a task from the queue by task ID (M06 CancelTask support).
+     * @param taskId Unique task ID to remove.
+     * @return true if found and removed; false otherwise.
      */
     bool RemoveTask(uint64_t taskId);
 

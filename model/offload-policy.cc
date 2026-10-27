@@ -1,7 +1,7 @@
 /**
- * \file offload-policy.cc
- * \brief Implementation of offloading policies for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file offload-policy.cc
+ * @brief Implementation of offloading policies for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  *
  * Implements M06-FR-08 and M06-FR-10: LocalOnlyPolicy baseline, NearestEdgePolicy,
  * and LowestEstimatedCompletionTimePolicy.
