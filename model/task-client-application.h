@@ -1,7 +1,7 @@
 /**
- * \file task-client-application.h
- * \brief TaskClientApplication definition for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file task-client-application.h
+ * @brief TaskClientApplication definition for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  *
  * Implements M06-FR-05, M06-FR-06, M06-FR-09, M06-FR-11:
  * Client application for task generation, local execution vs. remote offload,
@@ -32,8 +32,8 @@ namespace ns3
 {
 
 /**
- * \ingroup futurenet-edge
- * \brief Internal record tracking the 5 milestone timestamps of an active task.
+ * @ingroup futurenet-edge
+ * @brief Internal record tracking the 5 milestone timestamps of an active task.
  */
 struct TaskClientRecord
 {
@@ -50,15 +50,15 @@ struct TaskClientRecord
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Client application that generates computational tasks and manages offloading.
+ * @ingroup futurenet-edge
+ * @brief Client application that generates computational tasks and manages offloading.
  */
 class TaskClientApplication : public Application
 {
   public:
     /**
-     * \brief Register this type with the ns-3 TypeId system.
-     * \return TypeId instance.
+     * @brief Register this type with the ns-3 TypeId system.
+     * @return TypeId instance.
      */
     static TypeId GetTypeId();
 
@@ -66,11 +66,11 @@ class TaskClientApplication : public Application
     ~TaskClientApplication() override;
 
     /**
-     * \brief Registers an edge/cloud candidate compute node for offloading consideration.
-     * \param targetNode Node instance hosting the EdgeComputeApplication.
-     * \param targetAddress Network Address (IP and port) of server application.
-     * \param estimatedDataRateMbps Estimated transmission throughput in Mbit/s.
-     * \param estimatedDelayMs Estimated one-way propagation latency in ms.
+     * @brief Registers an edge/cloud candidate compute node for offloading consideration.
+     * @param targetNode Node instance hosting the EdgeComputeApplication.
+     * @param targetAddress Network Address (IP and port) of server application.
+     * @param estimatedDataRateMbps Estimated transmission throughput in Mbit/s.
+     * @param estimatedDelayMs Estimated one-way propagation latency in ms.
      */
     void AddComputeTarget(Ptr<Node> targetNode,
                           Address targetAddress,
@@ -78,28 +78,37 @@ class TaskClientApplication : public Application
                           double estimatedDelayMs = 5.0);
 
     /**
-     * \brief Configures the offloading decision policy (M06-FR-08).
-     * \param policy Pointer to OffloadPolicy implementation.
+     * @brief Configures the offloading decision policy (M06-FR-08).
+     * @param policy Pointer to OffloadPolicy implementation.
      */
     void SetOffloadPolicy(Ptr<OffloadPolicy> policy);
 
     /**
-     * \brief Immediately generates and dispatches a single task.
-     * \return Unique taskId assigned to the generated task.
+     * @brief Immediately generates and dispatches a single task.
+     * @return Unique taskId assigned to the generated task.
      */
     uint64_t GenerateTask();
 
     /**
-     * \brief Queries the current lifecycle status of a task by ID.
-     * \param taskId Unique task ID.
-     * \return Current TaskStatus.
+     * @brief Queries the current lifecycle status of a task by ID.
+     * @param taskId Unique task ID.
+     * @return Current TaskStatus.
      */
     TaskStatus GetTaskStatus(uint64_t taskId) const;
 
     /**
-     * \brief Assigns a fixed random variable stream for reproducibility (CG-09, CG-10).
-     * \param stream Stream index.
-     * \return Number of streams assigned.
+     * @brief Queries milestone record for a completed or active task.
+     * @param taskId Unique task ID.
+     * @param record Output record populated if found.
+     * @return True if record found, false otherwise.
+     */
+    bool GetTaskRecord(uint64_t taskId, TaskClientRecord& record) const;
+
+
+    /**
+     * @brief Assigns a fixed random variable stream for reproducibility (CG-09, CG-10).
+     * @param stream Stream index.
+     * @return Number of streams assigned.
      */
     int64_t AssignStreams(int64_t stream);
 
@@ -176,6 +185,7 @@ class TaskClientApplication : public Application
     TracedCallback<uint64_t, uint32_t, uint32_t> m_traceTaskOffloaded;
     TracedCallback<uint64_t, Time> m_traceTaskCompleted;
     TracedCallback<uint64_t, Time> m_traceTaskDeadlineMiss;
+    TracedCallback<const TaskClientRecord&> m_traceTaskRecordCompleted; //!< Full milestone record
 };
 
 } // namespace ns3

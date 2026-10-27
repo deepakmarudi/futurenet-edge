@@ -1,7 +1,7 @@
 /**
- * \file task-packet-header.h
- * \brief 64-Byte Application Wire Header for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file task-packet-header.h
+ * @brief 64-Byte Application Wire Header for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  *
  * Implements a fixed 64-byte binary header for framing task requests,
  * computation results, and completion acknowledgments across ns-3 TCP and UDP sockets.
@@ -20,8 +20,8 @@ namespace ns3
 {
 
 /**
- * \ingroup futurenet-edge
- * \brief Fixed 64-byte application wire header for edge task transmission.
+ * @ingroup futurenet-edge
+ * @brief Fixed 64-byte application wire header for edge task transmission.
  *
  * Packet layout (exact 64 bytes):
  * - Byte 0: PacketType (1=REQUEST, 2=RESULT, 3=ACK_ONLY)
@@ -47,8 +47,8 @@ class TaskPacketHeader : public Header
     ~TaskPacketHeader() override = default;
 
     /**
-     * \brief Register this type with the ns-3 TypeId system.
-     * \return TypeId instance.
+     * @brief Register this type with the ns-3 TypeId system.
+     * @return TypeId instance.
      */
     static TypeId GetTypeId();
     TypeId GetInstanceTypeId() const override;

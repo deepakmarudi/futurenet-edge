@@ -1,6 +1,6 @@
 /**
- * \file edge-compute-application.cc
- * \brief Server-side task reception, compute submission, and result transfer.
+ * @file edge-compute-application.cc
+ * @brief Server-side task reception, compute submission, and result transfer.
  */
 
 #include "edge-compute-application.h"

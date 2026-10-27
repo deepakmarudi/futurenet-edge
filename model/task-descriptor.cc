@@ -1,7 +1,7 @@
 /**
- * \file task-descriptor.cc
- * \brief Implementation of TaskDescriptor for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file task-descriptor.cc
+ * @brief Implementation of TaskDescriptor for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  */
 
 #include "task-descriptor.h"

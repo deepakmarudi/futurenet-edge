@@ -1,7 +1,7 @@
 /**
- * \file compute-queue.cc
- * \brief Implementation of ComputeQueue for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file compute-queue.cc
+ * @brief Implementation of ComputeQueue for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  */
 
 #include "compute-queue.h"

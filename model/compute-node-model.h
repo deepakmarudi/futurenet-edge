@@ -1,7 +1,7 @@
 /**
- * \file compute-node-model.h
- * \brief ComputeNodeModel definition for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file compute-node-model.h
+ * @brief ComputeNodeModel definition for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  *
  * Implements M06-FR-02, M06-FR-03, M06-FR-04: Models node compute capacity
  * in abstract cycles/s, execution queue, non-preemptive task scheduling,
@@ -24,8 +24,8 @@ namespace ns3
 {
 
 /**
- * \ingroup futurenet-edge
- * \brief Represents the computational processing capability of an ns-3 node.
+ * @ingroup futurenet-edge
+ * @brief Represents the computational processing capability of an ns-3 node.
  *
  * Manages an execution queue and schedules non-preemptive CPU execution
  * events based on task cycles and node compute capacity (cycles/s).
@@ -34,8 +34,8 @@ class ComputeNodeModel : public Object
 {
   public:
     /**
-     * \brief Register this type with the ns-3 TypeId system.
-     * \return TypeId instance.
+     * @brief Register this type with the ns-3 TypeId system.
+     * @return TypeId instance.
      */
     static TypeId GetTypeId();
 
@@ -43,55 +43,55 @@ class ComputeNodeModel : public Object
     ~ComputeNodeModel() override;
 
     /**
-     * \brief Sets the compute processing rate.
-     * \param cyclesPerSecond Rate in abstract cycles per second.
+     * @brief Sets the compute processing rate.
+     * @param cyclesPerSecond Rate in abstract cycles per second.
      */
     void SetComputeCapacity(double cyclesPerSecond);
 
     /**
-     * \brief Gets the compute processing rate.
-     * \return Capacity in cycles/s.
+     * @brief Gets the compute processing rate.
+     * @return Capacity in cycles/s.
      */
     double GetComputeCapacity() const;
 
     /**
-     * \brief Gets the current number of tasks waiting in queue.
-     * \return Current queue length.
+     * @brief Gets the current number of tasks waiting in queue.
+     * @return Current queue length.
      */
     uint32_t GetQueueLength() const;
 
     /**
-     * \brief Returns the underlying ComputeQueue object.
-     * \return Pointer to ComputeQueue.
+     * @brief Returns the underlying ComputeQueue object.
+     * @return Pointer to ComputeQueue.
      */
     Ptr<ComputeQueue> GetQueue() const;
 
     /**
-     * \brief Estimates total duration from submission until completion of task.
+     * @brief Estimates total duration from submission until completion of task.
      * Evaluates: RemainingActiveTime + (QueuedCycles / Capacity) + (TaskCycles / Capacity).
-     * \param task Task descriptor to estimate.
-     * \return Estimated completion delay.
+     * @param task Task descriptor to estimate.
+     * @return Estimated completion delay.
      */
     Time EstimateCompletion(const TaskDescriptor& task) const;
 
     /**
-     * \brief Submits a task for execution on this compute node.
-     * \param task Task metadata.
-     * \param onComplete Callback invoked when CPU execution completes (task, waitTime, computeTime).
-     * \return true if task was admitted; false if queue is full.
+     * @brief Submits a task for execution on this compute node.
+     * @param task Task metadata.
+     * @param onComplete Callback invoked when CPU execution completes (task, waitTime, computeTime).
+     * @return true if task was admitted; false if queue is full.
      */
     bool SubmitTask(const TaskDescriptor& task,
                     Callback<void, const TaskDescriptor&, Time, Time> onComplete);
 
     /**
-     * \brief Cancels a task by ID (purges from queue or cancels active execution).
-     * \param taskId Unique task ID.
+     * @brief Cancels a task by ID (purges from queue or cancels active execution).
+     * @param taskId Unique task ID.
      */
     void CancelTask(uint64_t taskId);
 
     /**
-     * \brief Exports the node's current utilization and queue state as NetworkState (CG Section 4.1).
-     * \return NetworkState telemetry snapshot.
+     * @brief Exports the node's current utilization and queue state as NetworkState (CG Section 4.1).
+     * @return NetworkState telemetry snapshot.
      */
     NetworkState GetNetworkState() const;
 
@@ -100,12 +100,12 @@ class ComputeNodeModel : public Object
 
   private:
     /**
-     * \brief Pops next task from queue and schedules CPU execution event.
+     * @brief Pops next task from queue and schedules CPU execution event.
      */
     void ProcessNextTask();
 
     /**
-     * \brief Called when current task's CPU cycles finish.
+     * @brief Called when current task's CPU cycles finish.
      */
     void OnTaskExecutionFinished();
 

@@ -1,7 +1,7 @@
 /**
- * \file compute-node-model.cc
- * \brief Implementation of ComputeNodeModel for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file compute-node-model.cc
+ * @brief Implementation of ComputeNodeModel for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  */
 
 #include "compute-node-model.h"

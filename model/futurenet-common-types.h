@@ -1,7 +1,7 @@
 /**
- * \file futurenet-common-types.h
- * \brief Common types and interface contract for FutureNet ns-3.46.1 modules.
- * \author FutureNet Module Team
+ * @file futurenet-common-types.h
+ * @brief Common types and interface contract for FutureNet ns-3.46.1 modules.
+ * @author FutureNet Module Team
  *
  * This file defines the standard cross-module data structures specified in
  * Section 4 of the Common Software Requirements and Design Guidelines for
@@ -21,8 +21,8 @@ namespace ns3
 {
 
 /**
- * \ingroup futurenet-edge
- * \brief Common snapshot of node and network metrics across FutureNet modules (CG Section 4.1).
+ * @ingroup futurenet-edge
+ * @brief Common snapshot of node and network metrics across FutureNet modules (CG Section 4.1).
  */
 struct NetworkState
 {
@@ -39,8 +39,8 @@ struct NetworkState
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Common link state representation across FutureNet modules (CG Section 4.2).
+ * @ingroup futurenet-edge
+ * @brief Common link state representation across FutureNet modules (CG Section 4.2).
  */
 struct LinkState
 {
@@ -53,8 +53,8 @@ struct LinkState
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Common mobility state representation across FutureNet modules (CG Section 4.3).
+ * @ingroup futurenet-edge
+ * @brief Common mobility state representation across FutureNet modules (CG Section 4.3).
  */
 struct MobilityState
 {
@@ -65,8 +65,8 @@ struct MobilityState
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Common traffic classification metadata across FutureNet modules (CG Section 4.4).
+ * @ingroup futurenet-edge
+ * @brief Common traffic classification metadata across FutureNet modules (CG Section 4.4).
  */
 struct FutureNetTrafficClass
 {

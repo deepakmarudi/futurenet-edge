@@ -1,7 +1,7 @@
 /**
- * \file edge-helper.cc
- * \brief Implementation of EdgeHelper for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file edge-helper.cc
+ * @brief Implementation of EdgeHelper for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  *
  * Implements M06 SRS Section 6 & CG-04: Helper class to install compute nodes,
  * client applications, and server applications on NodeContainers, forward attributes,
@@ -20,10 +20,14 @@
 #include "ns3/simulator.h"
 #include "ns3/trace-helper.h"
 
+#include <iomanip>
+
 namespace ns3
 {
 
 NS_LOG_COMPONENT_DEFINE("EdgeHelper");
+
+EdgeHelper::~EdgeHelper() = default;
 
 EdgeHelper::EdgeHelper()
 {
@@ -72,6 +76,11 @@ EdgeHelper::InstallClient(Ptr<Node> node)
         app->SetOffloadPolicy(m_defaultPolicy);
     }
     node->AddApplication(app);
+    m_installedClients.push_back(app);
+    if (m_csvStream != nullptr)
+    {
+        HookCsvClient(app);
+    }
     NS_LOG_INFO("Installed TaskClientApplication on Node " << node->GetId());
     return ApplicationContainer(app);
 }
@@ -136,6 +145,62 @@ EdgeHelper::SetPolicy(Ptr<OffloadPolicy> policy)
 }
 
 void
+EdgeHelper::HookCsvClient(Ptr<TaskClientApplication> client)
+{
+    if (client != nullptr && m_csvStream != nullptr)
+    {
+        client->TraceConnectWithoutContext(
+            "TaskRecordCompleted",
+            MakeBoundCallback(&EdgeHelper::TaskRecordCsvWriter, m_csvStream));
+    }
+}
+
+void
+EdgeHelper::TaskRecordCsvWriter(Ptr<OutputStreamWrapper> stream, const TaskClientRecord& record)
+{
+    if (stream == nullptr || stream->GetStream() == nullptr)
+    {
+        return;
+    }
+
+    std::ostream* os = stream->GetStream();
+
+    double e2eMs = (record.timeDone - record.timeCreated).GetSeconds() * 1000.0;
+    double computeMs = record.remoteComputeDuration.GetSeconds() * 1000.0;
+    double queueMs = record.remoteQueueDuration.GetSeconds() * 1000.0;
+
+    double netMs = 0.0;
+    if (record.targetNodeId != record.task.GetSourceNodeId())
+    {
+        netMs = std::max(0.0, e2eMs - computeMs - queueMs);
+    }
+
+    double deadlineMs = record.task.HasDeadline()
+                            ? record.task.GetDeadline().GetSeconds() * 1000.0
+                            : 0.0;
+    int completed = (record.status == TaskStatus::COMPLETED) ? 1 : 0;
+
+    std::ios state(nullptr);
+    state.copyfmt(*os);
+
+    *os << record.task.GetTaskId() << ","
+        << record.task.GetSourceNodeId() << ","
+        << record.targetNodeId << ","
+        << std::fixed << std::setprecision(3) << record.timeCreated.GetSeconds() << ","
+        << record.task.GetInputBytes() << ","
+        << static_cast<uint64_t>(record.task.GetRequiredCycles()) << ","
+        << std::fixed << std::setprecision(3) << queueMs << ","
+        << std::fixed << std::setprecision(3) << netMs << ","
+        << std::fixed << std::setprecision(3) << computeMs << ","
+        << std::fixed << std::setprecision(3) << e2eMs << ","
+        << std::fixed << std::setprecision(3) << deadlineMs << ","
+        << completed << "\n";
+
+    os->copyfmt(state);
+    os->flush();
+}
+
+void
 EdgeHelper::EnableCsvTracing(std::string filePath)
 {
     AsciiTraceHelper ascii;
@@ -143,6 +208,12 @@ EdgeHelper::EnableCsvTracing(std::string filePath)
     *m_csvStream->GetStream()
         << "task_id,source,target,created_s,input_bytes,cycles,queue_ms,network_ms,compute_ms,e2e_ms,deadline_ms,completed\n";
     m_csvStream->GetStream()->flush();
+
+    for (auto& client : m_installedClients)
+    {
+        HookCsvClient(client);
+    }
+
     NS_LOG_INFO("Enabled M06 CSV tracing to: " << filePath);
 }
 

@@ -1,7 +1,7 @@
 /**
- * \file edge-compute-application.h
- * \brief EdgeComputeApplication definition for M06 futurenet-edge module.
- * \author FutureNet Module Team
+ * @file edge-compute-application.h
+ * @brief EdgeComputeApplication definition for M06 futurenet-edge module.
+ * @author FutureNet Module Team
  *
  * Implements M06-FR-06 and M06-FR-07: Server application that receives
  * offloaded task chunks over TCP/UDP, gates queue entry until payload reception
@@ -29,8 +29,8 @@ namespace ns3
 {
 
 /**
- * \ingroup futurenet-edge
- * \brief Context maintained by the server while reassembling multi-chunk task payloads.
+ * @ingroup futurenet-edge
+ * @brief Context maintained by the server while reassembling multi-chunk task payloads.
  */
 struct RxTaskContext
 {
@@ -43,8 +43,8 @@ struct RxTaskContext
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Result data waiting to be sent in bounded wire-protocol chunks.
+ * @ingroup futurenet-edge
+ * @brief Result data waiting to be sent in bounded wire-protocol chunks.
  */
 struct TxTaskContext
 {
@@ -65,15 +65,15 @@ struct TxTaskContext
 };
 
 /**
- * \ingroup futurenet-edge
- * \brief Server-side application running on edge/cloud nodes to process offloaded tasks.
+ * @ingroup futurenet-edge
+ * @brief Server-side application running on edge/cloud nodes to process offloaded tasks.
  */
 class EdgeComputeApplication : public Application
 {
   public:
     /**
-     * \brief Register this type with the ns-3 TypeId system.
-     * \return TypeId instance.
+     * @brief Register this type with the ns-3 TypeId system.
+     * @return TypeId instance.
      */
     static TypeId GetTypeId();
 
@@ -81,14 +81,14 @@ class EdgeComputeApplication : public Application
     ~EdgeComputeApplication() override;
 
     /**
-     * \brief Attaches the underlying compute engine (M06-FR-02, M06-FR-03).
-     * \param computeModel Pointer to node's ComputeNodeModel.
+     * @brief Attaches the underlying compute engine (M06-FR-02, M06-FR-03).
+     * @param computeModel Pointer to node's ComputeNodeModel.
      */
     void SetComputeNodeModel(Ptr<ComputeNodeModel> computeModel);
 
     /**
-     * \brief Gets the attached compute engine.
-     * \return Pointer to ComputeNodeModel.
+     * @brief Gets the attached compute engine.
+     * @return Pointer to ComputeNodeModel.
      */
     Ptr<ComputeNodeModel> GetComputeNodeModel() const;
 
