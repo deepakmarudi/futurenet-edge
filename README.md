@@ -136,6 +136,8 @@ Run the full automated test suite:
 | **T04** | LocalOnlyPolicy Verification | M06-FR-08 | Proves LocalOnlyPolicy never selects remote server even when edge is faster | **PASS** |
 | **T05** | Queue Admission Limit Handling | M06-FR-03 | Proves tasks are rejected cleanly when queue reaches `MaxQueuedTasks` | **PASS** |
 | **T06** | TaskCompleted TraceSource | M06-FR-09 | Hooks `TaskCompleted` and verifies emitted `taskId` and `e2eTime` match | **PASS** |
+| **T07** | ComputeQueue Priority Scheduling | M06-FR-04 | Verifies SJF and EDF dynamic insertion and execution ordering | **PASS** |
+| **T08** | UDP Transport Offloading | M06-FR-02 | Verifies multi-datagram chunking (>1400B) and round-trip completion over UDP | **PASS** |
 | **CG-T1**| Attribute Defaults Registration | CG-01, CG-12 | Asserts default values for capacity, queue size, and output ratio derivation | **PASS** |
 | **CG-T2**| Attribute Boundary Enforcement | CG-11 | Asserts out-of-range capacity and queue limits fail ns-3 checkers | **PASS** |
 | **CG-T5**| Deterministic Reproducibility | CG-10 | Identical seed and run numbers produce bit-for-bit identical completion times | **PASS** |

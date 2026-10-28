@@ -85,23 +85,41 @@ Verify that increasing task input volume linearly increases the remote communica
 ## 5. Experiment V3: Edge Queue Congestion & Policy Comparison (Boundary Scenario)
 
 ### Objective:
-Simulate high-load congestion where 25 client devices generate task bursts targeting edge infrastructure. Compare the blind proximity policy (`NearestEdgePolicy`) against the latency-optimal policy (`LowestEstimatedCompletionTimePolicy`).
+Simulate high-load congestion where 25 client devices generate task bursts targeting edge infrastructure. Compare the blind proximity policy (`NearestEdgePolicy`) against the latency-optimal policy (`LowestEstimatedCompletionTimePolicy`) across 3 heterogeneous edge servers as specified in M06 SRS Section 10 and demonstrated in `example-multiedge.cc`.
 
 ### Setup:
-- 25 client devices generating 100 total tasks.
-- 2 Edge Servers (Edge 1 closer with 5 ms delay; Edge 2 with 15 ms delay).
-- High arrival rate triggering queue buildup on the nearest edge node.
+- **Clients:** 25 mobile client nodes (Nodes 0–24), each generating 4 tasks (100 tasks total) at 10 ms staggered intervals.
+- **Task Parameters:** 100 kB input payload, 25 kB output payload, $5.0 \times 10^9$ abstract CPU cycles per task.
+- **Edge Servers (3 Heterogeneous Instances):**
+  - **Edge Node 26 (`10.1.0.101`):** Baseline compute capacity $1.0 \times 10^{10}$ cycles/s, nearest link (5 ms delay, 50 Mbps).
+  - **Edge Node 27 (`10.1.0.105`):** Medium compute capacity $1.5 \times 10^{10}$ cycles/s, intermediate link (12 ms delay, 100 Mbps).
+  - **Edge Node 28 (`10.1.0.109`):** High compute capacity $2.0 \times 10^{10}$ cycles/s, distant high-speed link (20 ms delay, 200 Mbps).
+- **Queue Limits:** `MaxQueuedTasks = 100` per edge server.
 
-### Comparative Results:
+### Execution Commands:
+```bash
+# 1. Baseline: Nearest Edge Policy
+./ns3 run "example-multiedge --clientCount=25 --edgeCount=3 --tasksPerClient=4 --policy=nearest --csvPath=contrib/futurenet-edge/doc/results/v3-multiedge-nearest.csv"
+
+# 2. Optimized: Lowest Estimated Completion Time Policy
+./ns3 run "example-multiedge --clientCount=25 --edgeCount=3 --tasksPerClient=4 --policy=lowest --csvPath=contrib/futurenet-edge/doc/results/v3-multiedge-lowest.csv"
+```
+
+### Empirical Comparative Results:
+*Measured from simulation runs preserved in `contrib/futurenet-edge/doc/results/v3-multiedge-nearest.csv` and `v3-multiedge-lowest.csv`:*
+
 | Metric | Baseline: `NearestEdgePolicy` | Optimized: `LowestEstimatedCompletionTimePolicy` | Improvement |
 | :--- | :--- | :--- | :--- |
-| **Average Queue Wait (`queue_ms`)** | 428.6 ms | 84.1 ms | **-80.4%** |
-| **Average End-to-End Latency (`e2e_ms`)** | 612.4 ms | 268.3 ms | **-56.2%** |
-| **Edge Server 1 Utilization** | 98.4% (Severely congested) | 62.1% (Balanced) | - |
-| **Edge Server 2 Utilization** | 12.0% (Underutilized) | 58.7% (Balanced) | - |
-| **Dropped Tasks (Queue Full)** | 6 tasks | 0 tasks | **100% Resolved** |
+| **Total Tasks Completed** | 100 / 100 (100%) | 100 / 100 (100%) | 100% Delivery |
+| **Average Queue Wait (`queue_ms`)** | **24,024.101 ms** | **2,740.000 ms** | **-88.59%** |
+| **Average End-to-End Latency (`e2e_ms`)** | **24,598.995 ms** | **4,365.125 ms** | **-82.25%** |
+| **Edge Node 26 Allocation (10 Gcycles/s)** | 100 tasks (100%) | 15 tasks (15%) | Load Shedding |
+| **Edge Node 27 Allocation (15 Gcycles/s)** | 0 tasks (0%) | 22 tasks (22%) | Multi-Edge Utilization |
+| **Edge Node 28 Allocation (20 Gcycles/s)** | 0 tasks (0%) | 38 tasks (38%) | Capacity-Proportional |
+| **Client Local Execution** | 0 tasks (0%) | 25 tasks (25%) | Autonomous Fallback |
+| **Dropped Tasks (`FAILED_QUEUE_FULL`)** | 0 tasks | 0 tasks | Clean Execution |
 
-**Conclusion V3:** Under heavy load, `NearestEdgePolicy` blinds itself to queue lengths and causes severe bottlenecking. `LowestEstimatedCompletionTimePolicy` dynamically distributes workloads across available nodes, proving the value of algorithmic mechanism/policy separation.
+**Conclusion V3:** Under heavy burst load, `NearestEdgePolicy` routes every task to Edge Node 26 solely based on lowest network RTT, ignoring queue backlog and causing a catastrophic 24-second head-of-line queue delay while higher-capacity Edge Nodes 27 and 28 sit completely idle. In contrast, `LowestEstimatedCompletionTimePolicy` incorporates estimated transfer delay, node capacity, and existing queue backlog ($T_{\text{est}} = T_{\text{up}} + T_{\text{wait}} + T_{\text{comp}} + T_{\text{down}}$). It dynamically directs 38% of tasks to the fastest server (Node 28), 22% to Node 27, 15% to Node 26, and retains 25% for local processing, achieving an **88.59% reduction in queue wait** and an **82.25% reduction in total end-to-end task completion time**.
 
 ---
 

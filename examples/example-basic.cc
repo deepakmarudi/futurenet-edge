@@ -32,6 +32,7 @@ main(int argc, char* argv[])
     double requiredCycles = 1e9;        // 1 Billion cycles
     double simTime = 10.0;              // 10 seconds
     std::string csvPath = "edge-offload-results.csv";
+    std::string eventLogPath = "";
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("useOffload", "True = Offload to Edge, False = Run Local Only", useOffload);
@@ -39,6 +40,7 @@ main(int argc, char* argv[])
     cmd.AddValue("requiredCycles", "Required computation cycles (default: 1e9)", requiredCycles);
     cmd.AddValue("simTime", "Simulation duration in seconds", simTime);
     cmd.AddValue("csvPath", "Path to output CSV file", csvPath);
+    cmd.AddValue("eventLogPath", "Path to optional 10-column Common Guidelines event log CSV", eventLogPath);
     cmd.Parse(argc, argv);
 
     Time::SetResolution(Time::NS);
@@ -112,6 +114,10 @@ main(int argc, char* argv[])
 
     // 8. Enable CSV Tracing Output
     edgeHelper.EnableCsvTracing(csvPath);
+    if (!eventLogPath.empty())
+    {
+        edgeHelper.EnableCommonEventLog(eventLogPath);
+    }
 
     // 9. Install FlowMonitor to measure real IP network traffic
     FlowMonitorHelper flowmonHelper;

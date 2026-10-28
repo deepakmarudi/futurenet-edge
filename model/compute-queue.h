@@ -95,6 +95,18 @@ class ComputeQueue : public Object
     void SetMaxQueueLength(uint32_t maxQueue);
 
     /**
+     * @brief Sets the task scheduling discipline (FCFS, SJF, EDF).
+     * @param scheduling Discipline name.
+     */
+    void SetScheduling(std::string scheduling);
+
+    /**
+     * @brief Gets the task scheduling discipline.
+     * @return Discipline name.
+     */
+    std::string GetScheduling() const;
+
+    /**
      * @brief Running total of computational cycles across all currently waiting tasks.
      * @return Cumulative cycles in queue.
      */
