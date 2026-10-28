@@ -62,10 +62,44 @@ ComputeQueue::Enqueue(const ComputeQueueEntry& entry)
         return false;
     }
 
-    m_queue.push_back(entry);
+    if (m_scheduling == "SJF")
+    {
+        // Shortest Job First: ascending order of requiredCycles
+        auto it = std::upper_bound(
+            m_queue.begin(),
+            m_queue.end(),
+            entry,
+            [](const ComputeQueueEntry& a, const ComputeQueueEntry& b) {
+                return a.task.GetRequiredCycles() < b.task.GetRequiredCycles();
+            });
+        m_queue.insert(it, entry);
+    }
+    else if (m_scheduling == "EDF")
+    {
+        // Earliest Deadline First: tasks with deadlines prioritized by earliest deadline
+        auto it = std::upper_bound(
+            m_queue.begin(),
+            m_queue.end(),
+            entry,
+            [](const ComputeQueueEntry& a, const ComputeQueueEntry& b) {
+                if (a.task.HasDeadline() && b.task.HasDeadline())
+                {
+                    return a.task.GetDeadline() < b.task.GetDeadline();
+                }
+                return a.task.HasDeadline() && !b.task.HasDeadline();
+            });
+        m_queue.insert(it, entry);
+    }
+    else
+    {
+        // Default: FCFS (First-Come, First-Served)
+        m_queue.push_back(entry);
+    }
+
     m_totalQueuedCycles += entry.task.GetRequiredCycles();
 
     NS_LOG_DEBUG("Enqueued task " << entry.task.GetTaskId()
+                                  << " (scheduling=" << m_scheduling << ")"
                                   << ", queue length=" << m_queue.size()
                                   << ", totalQueuedCycles=" << m_totalQueuedCycles);
     return true;
@@ -124,6 +158,19 @@ ComputeQueue::SetMaxQueueLength(uint32_t maxQueue)
 {
     NS_LOG_FUNCTION(this << maxQueue);
     m_maxQueuedTasks = maxQueue;
+}
+
+void
+ComputeQueue::SetScheduling(std::string scheduling)
+{
+    NS_LOG_FUNCTION(this << scheduling);
+    m_scheduling = scheduling;
+}
+
+std::string
+ComputeQueue::GetScheduling() const
+{
+    return m_scheduling;
 }
 
 double

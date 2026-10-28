@@ -778,7 +778,245 @@ FutureNetEdgeCgT6TestCase::DoRun()
 }
 
 // ===========================================================================
-// TestSuite definition: Bundles all 10 test cases under "futurenet-edge"
+// Test T07: ComputeQueue priority scheduling (SJF and EDF)
+// ===========================================================================
+class FutureNetEdgeT07TestCase : public TestCase
+{
+  public:
+    FutureNetEdgeT07TestCase();
+    void DoRun() override;
+
+  private:
+    void OnTaskDone(const TaskDescriptor& task, Time waitTime, Time computeTime);
+    std::vector<uint64_t> m_completedOrder;
+};
+
+FutureNetEdgeT07TestCase::FutureNetEdgeT07TestCase()
+    : TestCase("T07: ComputeQueue priority scheduling (SJF and EDF)")
+{
+}
+
+void
+FutureNetEdgeT07TestCase::OnTaskDone(const TaskDescriptor& task, Time waitTime, Time computeTime)
+{
+    (void)waitTime;
+    (void)computeTime;
+    m_completedOrder.push_back(task.GetTaskId());
+}
+
+void
+FutureNetEdgeT07TestCase::DoRun()
+{
+    // Part A: Direct ComputeQueue SJF (Shortest Job First) verification
+    {
+        Ptr<ComputeQueue> queue = CreateObject<ComputeQueue>();
+        queue->SetScheduling("SJF");
+
+        TaskDescriptor t1(1, 0, 1000, 100, 3e9, Simulator::Now()); // 3 Gcycles
+        TaskDescriptor t2(2, 0, 1000, 100, 1e9, Simulator::Now()); // 1 Gcycles
+        TaskDescriptor t3(3, 0, 1000, 100, 2e9, Simulator::Now()); // 2 Gcycles
+
+        auto nullCb = MakeNullCallback<void, const TaskDescriptor&, Time, Time>();
+        ComputeQueueEntry e1;
+        e1.task = t1;
+        e1.timeQueued = Simulator::Now();
+        e1.onCompleteCallback = nullCb;
+
+        ComputeQueueEntry e2;
+        e2.task = t2;
+        e2.timeQueued = Simulator::Now();
+        e2.onCompleteCallback = nullCb;
+
+        ComputeQueueEntry e3;
+        e3.task = t3;
+        e3.timeQueued = Simulator::Now();
+        e3.onCompleteCallback = nullCb;
+
+        NS_TEST_ASSERT_MSG_EQ(queue->Enqueue(e1), true, "Enqueue e1");
+        NS_TEST_ASSERT_MSG_EQ(queue->Enqueue(e2), true, "Enqueue e2");
+        NS_TEST_ASSERT_MSG_EQ(queue->Enqueue(e3), true, "Enqueue e3");
+
+        ComputeQueueEntry out;
+        NS_TEST_ASSERT_MSG_EQ(queue->Dequeue(out), true, "Dequeue 1");
+        NS_TEST_ASSERT_MSG_EQ(out.task.GetTaskId(), 2, "SJF must prioritize shortest job (Task 2: 1e9 cycles)");
+
+        NS_TEST_ASSERT_MSG_EQ(queue->Dequeue(out), true, "Dequeue 2");
+        NS_TEST_ASSERT_MSG_EQ(out.task.GetTaskId(), 3, "SJF must dequeue next shortest job (Task 3: 2e9 cycles)");
+
+        NS_TEST_ASSERT_MSG_EQ(queue->Dequeue(out), true, "Dequeue 3");
+        NS_TEST_ASSERT_MSG_EQ(out.task.GetTaskId(), 1, "SJF must dequeue longest job last (Task 1: 3e9 cycles)");
+
+        NS_TEST_ASSERT_MSG_EQ(queue->IsEmpty(), true, "Queue must be empty");
+    }
+
+    // Part B: Direct ComputeQueue EDF (Earliest Deadline First) verification
+    {
+        Ptr<ComputeQueue> queue = CreateObject<ComputeQueue>();
+        queue->SetScheduling("EDF");
+
+        TaskDescriptor t1(10, 0, 1000, 100, 1e9, Simulator::Now());
+        t1.SetDeadline(Seconds(30)); // Deadline 30s
+        TaskDescriptor t2(20, 0, 1000, 100, 1e9, Simulator::Now());
+        t2.SetDeadline(Seconds(10)); // Deadline 10s
+        TaskDescriptor t3(30, 0, 1000, 100, 1e9, Simulator::Now());
+        t3.SetDeadline(Seconds(20)); // Deadline 20s
+
+        auto nullCb = MakeNullCallback<void, const TaskDescriptor&, Time, Time>();
+        ComputeQueueEntry e1;
+        e1.task = t1;
+        e1.timeQueued = Simulator::Now();
+        e1.onCompleteCallback = nullCb;
+
+        ComputeQueueEntry e2;
+        e2.task = t2;
+        e2.timeQueued = Simulator::Now();
+        e2.onCompleteCallback = nullCb;
+
+        ComputeQueueEntry e3;
+        e3.task = t3;
+        e3.timeQueued = Simulator::Now();
+        e3.onCompleteCallback = nullCb;
+
+        NS_TEST_ASSERT_MSG_EQ(queue->Enqueue(e1), true, "Enqueue e1");
+        NS_TEST_ASSERT_MSG_EQ(queue->Enqueue(e2), true, "Enqueue e2");
+        NS_TEST_ASSERT_MSG_EQ(queue->Enqueue(e3), true, "Enqueue e3");
+
+        ComputeQueueEntry out;
+        NS_TEST_ASSERT_MSG_EQ(queue->Dequeue(out), true, "Dequeue 1");
+        NS_TEST_ASSERT_MSG_EQ(out.task.GetTaskId(), 20, "EDF must prioritize earliest deadline (Task 20: 10s)");
+
+        NS_TEST_ASSERT_MSG_EQ(queue->Dequeue(out), true, "Dequeue 2");
+        NS_TEST_ASSERT_MSG_EQ(out.task.GetTaskId(), 30, "EDF must dequeue next earliest deadline (Task 30: 20s)");
+
+        NS_TEST_ASSERT_MSG_EQ(queue->Dequeue(out), true, "Dequeue 3");
+        NS_TEST_ASSERT_MSG_EQ(out.task.GetTaskId(), 10, "EDF must dequeue latest deadline last (Task 10: 30s)");
+
+        NS_TEST_ASSERT_MSG_EQ(queue->IsEmpty(), true, "Queue must be empty");
+    }
+
+    // Part C: Integrated ComputeNodeModel execution with SJF
+    {
+        m_completedOrder.clear();
+        Ptr<ComputeNodeModel> node = CreateObject<ComputeNodeModel>();
+        node->SetComputeCapacity(1e9); // 1 Gcycles/s
+        node->GetQueue()->SetScheduling("SJF");
+
+        // t100 runs immediately: 2e9 cycles = 2.0s compute duration
+        TaskDescriptor t100(100, 0, 1000, 100, 2e9, Simulator::Now());
+        // While t100 is executing, submit t101 (3e9 cycles) and t102 (1e9 cycles)
+        TaskDescriptor t101(101, 0, 1000, 100, 3e9, Simulator::Now());
+        TaskDescriptor t102(102, 0, 1000, 100, 1e9, Simulator::Now());
+
+        node->SubmitTask(t100, MakeCallback(&FutureNetEdgeT07TestCase::OnTaskDone, this));
+        node->SubmitTask(t101, MakeCallback(&FutureNetEdgeT07TestCase::OnTaskDone, this));
+        node->SubmitTask(t102, MakeCallback(&FutureNetEdgeT07TestCase::OnTaskDone, this));
+
+        Simulator::Run();
+        Simulator::Destroy();
+
+        NS_TEST_ASSERT_MSG_EQ(m_completedOrder.size(), 3, "All 3 tasks must complete");
+        NS_TEST_ASSERT_MSG_EQ(m_completedOrder[0], 100, "First running task must complete first");
+        NS_TEST_ASSERT_MSG_EQ(m_completedOrder[1], 102, "SJF must dispatch shorter queued job (Task 102) before longer job");
+        NS_TEST_ASSERT_MSG_EQ(m_completedOrder[2], 101, "SJF must dispatch longer queued job (Task 101) last");
+    }
+}
+
+// ===========================================================================
+// Test T08: UDP transport offloading and packet chunking (M06-FR-02)
+// ===========================================================================
+class FutureNetEdgeT08TestCase : public TestCase
+{
+  public:
+    FutureNetEdgeT08TestCase();
+    void DoRun() override;
+
+  private:
+    void OnTaskCompleted(uint64_t taskId, Time e2eTime);
+    uint32_t m_completedCount{0};
+    uint64_t m_completedTaskId{0};
+    Time m_lastE2eTime{Seconds(0)};
+};
+
+FutureNetEdgeT08TestCase::FutureNetEdgeT08TestCase()
+    : TestCase("T08: UDP transport offloading and packet chunking")
+{
+}
+
+void
+FutureNetEdgeT08TestCase::OnTaskCompleted(uint64_t taskId, Time e2eTime)
+{
+    m_completedCount++;
+    m_completedTaskId = taskId;
+    m_lastE2eTime = e2eTime;
+}
+
+void
+FutureNetEdgeT08TestCase::DoRun()
+{
+    m_completedCount = 0;
+    m_completedTaskId = 0;
+    m_lastE2eTime = Seconds(0);
+
+    NodeContainer nodes;
+    nodes.Create(2);
+
+    PointToPointHelper p2p;
+    p2p.SetDeviceAttribute("DataRate", StringValue("100Mbps"));
+    p2p.SetChannelAttribute("Delay", StringValue("2ms"));
+    NetDeviceContainer devices = p2p.Install(nodes);
+
+    InternetStackHelper internet;
+    internet.Install(nodes);
+
+    Ipv4AddressHelper addresses;
+    addresses.SetBase("10.77.0.0", "255.255.255.0");
+    Ipv4InterfaceContainer interfaces = addresses.Assign(devices);
+
+    Ptr<ComputeNodeModel> serverCompute = CreateObject<ComputeNodeModel>();
+    serverCompute->SetComputeCapacity(1e10); // 10 Gcycles/s
+    nodes.Get(1)->AggregateObject(serverCompute);
+
+    Ptr<EdgeComputeApplication> serverApp = CreateObject<EdgeComputeApplication>();
+    serverApp->SetComputeNodeModel(serverCompute);
+    serverApp->SetAttribute("OffloadProtocol", StringValue("UDP"));
+    serverApp->SetAttribute("Port", UintegerValue(9098));
+    nodes.Get(1)->AddApplication(serverApp);
+    serverApp->SetStartTime(Seconds(0.0));
+    serverApp->SetStopTime(Seconds(5.0));
+
+    Ptr<TaskClientApplication> clientApp = CreateObject<TaskClientApplication>();
+    clientApp->SetOffloadPolicy(CreateObject<NearestEdgePolicy>());
+    clientApp->SetAttribute("OffloadProtocol", StringValue("UDP"));
+    clientApp->SetAttribute("TaskInputBytes", UintegerValue(5000));   // Multi-packet (>1400 bytes)
+    clientApp->SetAttribute("TaskOutputBytes", UintegerValue(1500));  // Multi-packet return
+    clientApp->SetAttribute("RequiredCycles", DoubleValue(1e8));      // 0.01s compute
+    clientApp->SetAttribute("TaskArrivalInterval", TimeValue(Seconds(0)));
+
+    InetSocketAddress serverAddr(interfaces.GetAddress(1), 9098);
+    clientApp->AddComputeTarget(nodes.Get(1), serverAddr, 100.0, 2.0);
+    nodes.Get(0)->AddApplication(clientApp);
+
+    clientApp->TraceConnectWithoutContext(
+        "TaskCompleted",
+        MakeCallback(&FutureNetEdgeT08TestCase::OnTaskCompleted, this));
+
+    clientApp->SetStartTime(Seconds(0.5));
+    clientApp->SetStopTime(Seconds(5.0));
+
+    Simulator::Schedule(Seconds(1.0), &TaskClientApplication::GenerateTask, clientApp);
+
+    Simulator::Stop(Seconds(5.0));
+    Simulator::Run();
+
+    NS_TEST_ASSERT_MSG_EQ(m_completedCount, 1, "UDP offload task must complete");
+    NS_TEST_ASSERT_MSG_EQ(m_completedTaskId, 1, "Completed taskId must match generated task");
+    NS_TEST_ASSERT_MSG_GT(m_lastE2eTime, Seconds(0), "End-to-end time must be positive");
+
+    Simulator::Destroy();
+}
+
+// ===========================================================================
+// TestSuite definition: Bundles all 12 test cases under "futurenet-edge"
 // ===========================================================================
 class FuturenetEdgeTestSuite : public TestSuite
 {
@@ -795,6 +1033,8 @@ FuturenetEdgeTestSuite::FuturenetEdgeTestSuite()
     AddTestCase(new LocalOnlyPolicyTestCase);
     AddTestCase(new FutureNetEdgeT05TestCase);
     AddTestCase(new FutureNetEdgeT06TestCase);
+    AddTestCase(new FutureNetEdgeT07TestCase);
+    AddTestCase(new FutureNetEdgeT08TestCase);
     AddTestCase(new FutureNetEdgeCgT1TestCase);
     AddTestCase(new FutureNetEdgeCgT2TestCase);
     AddTestCase(new FutureNetEdgeCgT5TestCase);

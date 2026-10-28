@@ -18,7 +18,7 @@ Ensure the simulator build is fresh and error-free:
 
 ## 2. Step 1: Automated Test Suite (1 Minute)
 
-Run the full automated test suite to prove all 10 unit and integration tests pass:
+Run the full automated test suite to prove all 12 unit and integration tests pass:
 ```bash
 ./test.py -s futurenet-edge -v
 ```
@@ -30,6 +30,8 @@ Run the full automated test suite to prove all 10 unit and integration tests pas
   - `T04`: `LocalOnlyPolicy` strictly selects local execution.
   - `T05`: Max queue capacity limits and drop behavior (`MaxQueuedTasks`).
   - `T06`: `TaskCompleted` TraceSource emits correct `taskId` and duration.
+  - `T07`: `ComputeQueue` priority scheduling (`SJF` shortest job first, `EDF` earliest deadline first).
+  - `T08`: UDP transport offloading with multi-packet datagram chunking and reply reception.
 - **Common Guidelines Tests:**
   - `CG-T1`: Attribute registration, defaults, and output ratio derivation.
   - `CG-T2`: Attribute boundary and range enforcement.
@@ -89,14 +91,14 @@ wc -l demo-multi.csv
 
 ## 5. Team Presentation & Role Breakdown
 
-- **Teammate 1 (Compute & Queue Engine Lead — TM1):**
+- **Teammate 1 (Guna Shekar, 24JE0896) (Compute & Queue Engine Lead — TM1):**
   - Explains `TaskDescriptor` workload abstraction and dynamic `outputRatio` derivation.
   - Explains `ComputeQueue` ($O(1)$ operations with running cycle sum tracking) and non-preemptive `ComputeNodeModel` scheduling ($T = C / F$).
   - Shows Deliverable D6 (`doc/parameter-reference.md`).
-- **Teammate 2 (Networking & Applications Lead — TM2):**
+- **Teammate 2 (Deepak, 24JE0909) (Networking & Applications Lead — TM2):**
   - Explains the 64-byte `TaskPacketHeader` framing for TCP streaming and UDP 1400-byte datagram chunking.
   - Explains `FlowMonitor` IP-level flow metrics and `TaskClientApplication` milestone tracking.
   - Shows `doc/algorithms-and-traces.md`.
-- **Teammate 3 (Policies & Validation Lead — TM3):**
+- **Teammate 3 (Lokesh, 24JE0891) (Policies & Validation Lead — TM3):**
   - Explains `OffloadPolicy` interface separation and how `LowestEstimatedCompletionTimePolicy` mitigates queue congestion.
   - Explains `EdgeHelper` 12-column CSV logging and walks through the validation experiments in `doc/validation-report.md`.

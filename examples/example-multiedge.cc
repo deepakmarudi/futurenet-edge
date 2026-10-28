@@ -137,6 +137,7 @@ main(int argc, char *argv[])
     std::string protocol = "TCP";
     std::string ackMode = "ResultData";
     std::string csvPath = "multiedge-results.csv";
+    std::string eventLogPath = "";
     uint16_t serverPort = 9090;
     uint32_t seed = 1;
     uint64_t run = 1;
@@ -153,6 +154,7 @@ main(int argc, char *argv[])
     cmd.AddValue("protocol", "Task transport protocol: TCP or UDP", protocol);
     cmd.AddValue("ackMode", "Result mode: ResultData or AckOnly", ackMode);
     cmd.AddValue("csvPath", "Path to output CSV file (default: multiedge-results.csv)", csvPath);
+    cmd.AddValue("eventLogPath", "Path to optional 10-column Common Guidelines event log CSV", eventLogPath);
     cmd.AddValue("port", "Edge server listening port", serverPort);
     cmd.AddValue("seed", "RNG seed", seed);
     cmd.AddValue("run", "RNG run number", run);
@@ -276,6 +278,10 @@ main(int argc, char *argv[])
 
     // Enable 12-column CSV tracing for all client tasks
     edgeHelper.EnableCsvTracing(csvPath);
+    if (!eventLogPath.empty())
+    {
+        edgeHelper.EnableCommonEventLog(eventLogPath);
+    }
 
     // Disable periodic generation and schedule a fixed task count for a repeatable
     // 25-client / 100-task baseline while still using TaskClientApplication.

@@ -52,6 +52,11 @@ EdgeHelper::InstallComputeNode(Ptr<Node> node)
     NS_ASSERT_MSG(node != nullptr, "Cannot install ComputeNodeModel on null Node");
     Ptr<ComputeNodeModel> model = m_computeFactory.Create<ComputeNodeModel>();
     node->AggregateObject(model);
+    m_installedComputeNodes.push_back(model);
+    if (m_eventStream != nullptr)
+    {
+        HookEventCompute(model);
+    }
     NS_LOG_INFO("Installed ComputeNodeModel on Node " << node->GetId());
 }
 
@@ -80,6 +85,10 @@ EdgeHelper::InstallClient(Ptr<Node> node)
     if (m_csvStream != nullptr)
     {
         HookCsvClient(app);
+    }
+    if (m_eventStream != nullptr)
+    {
+        HookEventClient(app);
     }
     NS_LOG_INFO("Installed TaskClientApplication on Node " << node->GetId());
     return ApplicationContainer(app);
@@ -218,6 +227,148 @@ EdgeHelper::EnableCsvTracing(std::string filePath)
 }
 
 void
+EdgeHelper::HookEventClient(Ptr<TaskClientApplication> client)
+{
+    if (client != nullptr && m_eventStream != nullptr)
+    {
+        client->TraceConnectWithoutContext("TaskCreated",
+            MakeBoundCallback(&EdgeHelper::EventTaskCreated, m_eventStream));
+        client->TraceConnectWithoutContext("TaskOffloaded",
+            MakeBoundCallback(&EdgeHelper::EventTaskOffloaded, m_eventStream));
+        client->TraceConnectWithoutContext("TaskCompleted",
+            MakeBoundCallback(&EdgeHelper::EventTaskCompleted, m_eventStream));
+        client->TraceConnectWithoutContext("TaskDeadlineMiss",
+            MakeBoundCallback(&EdgeHelper::EventTaskDeadlineMiss, m_eventStream));
+    }
+}
+
+void
+EdgeHelper::HookEventCompute(Ptr<ComputeNodeModel> compute)
+{
+    if (compute != nullptr && m_eventStream != nullptr)
+    {
+        compute->TraceConnectWithoutContext("TaskQueued",
+            MakeBoundCallback(&EdgeHelper::EventTaskQueued, m_eventStream));
+        compute->TraceConnectWithoutContext("TaskExecutionStart",
+            MakeBoundCallback(&EdgeHelper::EventTaskExecutionStart, m_eventStream));
+        compute->TraceConnectWithoutContext("TaskExecutionComplete",
+            MakeBoundCallback(&EdgeHelper::EventTaskExecutionComplete, m_eventStream));
+    }
+}
+
+void
+EdgeHelper::EventTaskCreated(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t sourceId)
+{
+    if (stream != nullptr && stream->GetStream() != nullptr)
+    {
+        std::ostream* os = stream->GetStream();
+        std::ios state(nullptr);
+        state.copyfmt(*os);
+        *os << std::fixed << std::setprecision(3) << Simulator::Now().GetSeconds()
+            << ",futurenet-edge,TaskCreated," << sourceId << "," << sourceId << ","
+            << taskId << ",0,0,none,task_id=" << taskId << "\n";
+        os->copyfmt(state);
+        os->flush();
+    }
+}
+
+void
+EdgeHelper::EventTaskOffloaded(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t sourceId, uint32_t targetId)
+{
+    if (stream != nullptr && stream->GetStream() != nullptr)
+    {
+        std::ostream* os = stream->GetStream();
+        std::ios state(nullptr);
+        state.copyfmt(*os);
+        *os << std::fixed << std::setprecision(3) << Simulator::Now().GetSeconds()
+            << ",futurenet-edge,TaskOffloaded," << sourceId << "," << targetId << ","
+            << taskId << ",0,0,none,task_id=" << taskId << "\n";
+        os->copyfmt(state);
+        os->flush();
+    }
+}
+
+void
+EdgeHelper::EventTaskCompleted(Ptr<OutputStreamWrapper> stream, uint64_t taskId, Time e2eTime)
+{
+    if (stream != nullptr && stream->GetStream() != nullptr)
+    {
+        std::ostream* os = stream->GetStream();
+        std::ios state(nullptr);
+        state.copyfmt(*os);
+        *os << std::fixed << std::setprecision(3) << Simulator::Now().GetSeconds()
+            << ",futurenet-edge,TaskCompleted,0,0," << taskId << ","
+            << std::fixed << std::setprecision(3) << e2eTime.GetMilliSeconds()
+            << ",0,ms,task_id=" << taskId << "\n";
+        os->copyfmt(state);
+        os->flush();
+    }
+}
+
+void
+EdgeHelper::EventTaskDeadlineMiss(Ptr<OutputStreamWrapper> stream, uint64_t taskId, Time lateness)
+{
+    if (stream != nullptr && stream->GetStream() != nullptr)
+    {
+        std::ostream* os = stream->GetStream();
+        std::ios state(nullptr);
+        state.copyfmt(*os);
+        *os << std::fixed << std::setprecision(3) << Simulator::Now().GetSeconds()
+            << ",futurenet-edge,TaskDeadlineMiss,0,0," << taskId << ","
+            << std::fixed << std::setprecision(3) << lateness.GetMilliSeconds()
+            << ",0,ms,task_id=" << taskId << "\n";
+        os->copyfmt(state);
+        os->flush();
+    }
+}
+
+void
+EdgeHelper::EventTaskQueued(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t targetId, uint32_t queueLen)
+{
+    if (stream != nullptr && stream->GetStream() != nullptr)
+    {
+        std::ostream* os = stream->GetStream();
+        std::ios state(nullptr);
+        state.copyfmt(*os);
+        *os << std::fixed << std::setprecision(3) << Simulator::Now().GetSeconds()
+            << ",futurenet-edge,TaskQueued," << targetId << ",0," << taskId << ","
+            << queueLen << ",0,tasks,task_id=" << taskId << "\n";
+        os->copyfmt(state);
+        os->flush();
+    }
+}
+
+void
+EdgeHelper::EventTaskExecutionStart(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t targetId)
+{
+    if (stream != nullptr && stream->GetStream() != nullptr)
+    {
+        std::ostream* os = stream->GetStream();
+        std::ios state(nullptr);
+        state.copyfmt(*os);
+        *os << std::fixed << std::setprecision(3) << Simulator::Now().GetSeconds()
+            << ",futurenet-edge,TaskExecutionStart," << targetId << ",0," << taskId << ",0,0,none,task_id=" << taskId << "\n";
+        os->copyfmt(state);
+        os->flush();
+    }
+}
+
+void
+EdgeHelper::EventTaskExecutionComplete(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t targetId)
+{
+    if (stream != nullptr && stream->GetStream() != nullptr)
+    {
+        std::ostream* os = stream->GetStream();
+        std::ios state(nullptr);
+        state.copyfmt(*os);
+        *os << std::fixed << std::setprecision(3) << Simulator::Now().GetSeconds()
+            << ",futurenet-edge,TaskExecutionComplete," << targetId << ",0," << taskId << ",0,0,none,task_id=" << taskId << "\n";
+        os->copyfmt(state);
+        os->flush();
+    }
+}
+
+void
 EdgeHelper::EnableCommonEventLog(std::string filePath)
 {
     AsciiTraceHelper ascii;
@@ -225,6 +376,16 @@ EdgeHelper::EnableCommonEventLog(std::string filePath)
     *m_eventStream->GetStream()
         << "time_s,module,event,node_id,peer_id,flow_id,value1,value2,unit,detail\n";
     m_eventStream->GetStream()->flush();
+
+    for (auto& client : m_installedClients)
+    {
+        HookEventClient(client);
+    }
+    for (auto& compute : m_installedComputeNodes)
+    {
+        HookEventCompute(compute);
+    }
+
     NS_LOG_INFO("Enabled Common Guidelines Event Log to: " << filePath);
 }
 

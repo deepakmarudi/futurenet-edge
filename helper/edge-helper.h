@@ -23,6 +23,7 @@ namespace ns3
 {
 
 class OffloadPolicy;
+class ComputeNodeModel;
 class TaskClientApplication;
 struct TaskClientRecord;
 
@@ -128,8 +129,20 @@ class EdgeHelper
     Ptr<OutputStreamWrapper> m_eventStream;  //!< 10-column event log stream
 
     std::vector<Ptr<TaskClientApplication>> m_installedClients;
+    std::vector<Ptr<ComputeNodeModel>> m_installedComputeNodes;
+
     void HookCsvClient(Ptr<TaskClientApplication> client);
+    void HookEventClient(Ptr<TaskClientApplication> client);
+    void HookEventCompute(Ptr<ComputeNodeModel> compute);
+
     static void TaskRecordCsvWriter(Ptr<OutputStreamWrapper> stream, const TaskClientRecord& record);
+    static void EventTaskCreated(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t sourceId);
+    static void EventTaskOffloaded(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t sourceId, uint32_t targetId);
+    static void EventTaskCompleted(Ptr<OutputStreamWrapper> stream, uint64_t taskId, Time e2eTime);
+    static void EventTaskDeadlineMiss(Ptr<OutputStreamWrapper> stream, uint64_t taskId, Time lateness);
+    static void EventTaskQueued(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t targetId, uint32_t queueLen);
+    static void EventTaskExecutionStart(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t targetId);
+    static void EventTaskExecutionComplete(Ptr<OutputStreamWrapper> stream, uint64_t taskId, uint32_t targetId);
 };
 
 } // namespace ns3
